@@ -38,7 +38,7 @@
                     v-model="form.email">
                 </div>
                 <div class="mb-5">
-                  <label class="block mb-2 font-medium text-gray-700">Subjects</label>
+                  <label class="block mb-2 font-medium text-gray-700">Subject</label>
                   <input type="text" placeholder="Title..."
                     class="w-full p-5 text-gray-800 transition-all duration-300 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                     v-model="form.subject">
