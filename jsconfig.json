@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["resources/js/*"],
+            "ziggy-js": ["./vendor/tightenco/ziggy"]
+        },
+        "types": ["@inertiajs/inertia-vue3"]
+    },
+    "exclude": ["node_modules", "public"]
+}
