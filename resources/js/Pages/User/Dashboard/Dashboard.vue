@@ -51,7 +51,7 @@ const stateCategories = [
   },
   {
     id: 2,
-    title: 'Mountain',
+    title: 'Mountains',
     image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b'
   },
   {
@@ -71,8 +71,13 @@ const stateCategories = [
   },
   {
     id: 6,
-    title: 'Cultural',
-    image: 'https://images.unsplash.com/photo-1533669955142-6a73332af4db'
+    title: 'Lakes',
+    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4'
+  },
+  {
+    id: 7,
+    title: 'Tourist Activities',
+    image: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800'
   }
 ];
 </script>
