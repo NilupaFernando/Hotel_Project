@@ -252,7 +252,7 @@ class HotelController extends Controller
             $userId = Auth::id();
             $users = User::find($userId);
             $favorites = Favorite::where('user_id', $userId)->get();
-            $hotels = Hotel::with('district','rooms')->findOrFail($id);
+            $hotels = Hotel::with('district','rooms.optionRoom')->findOrFail($id);
             $districts = District::with('province')->get();
             $hotels->images = json_decode($hotels->images, true);
 
