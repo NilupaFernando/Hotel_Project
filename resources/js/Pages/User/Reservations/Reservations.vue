@@ -101,6 +101,8 @@ onMounted(() => {
 const previousReservations = computed(() => {
   const now = new Date();
   return props.reservations.filter(request => {
+    // hide reservations user removed from their view
+    if (request.deleted_by_user) return false;
     if (request.is_completed) return true;
     return request.status === 'confirmed' && new Date(request.check_out_date) <= now;
   });
@@ -108,7 +110,7 @@ const previousReservations = computed(() => {
 
 const rejectedReservations = computed(() => {
   if (props.reservations) {
-    return props.reservations.filter(reservation => reservation.status === 'cancelled');
+    return props.reservations.filter(reservation => !reservation.deleted_by_user && reservation.status === 'cancelled');
   } else {
     return [];
   }
@@ -117,7 +119,7 @@ const rejectedReservations = computed(() => {
 
 const pendingReservations = computed(() => {
   if (props.reservations) {
-    return props.reservations.filter(reservation => reservation.status === 'pending');
+    return props.reservations.filter(reservation => !reservation.deleted_by_user && reservation.status === 'pending');
   } else {
     return [];
   }
@@ -178,6 +180,40 @@ const cancelReservation = (id) => {
           });
         }
       });
+    }
+  });
+};
+
+const deleteReservation = (reservation) => {
+  Swal.fire({
+    title: "Delete Reservation?",
+    text: `Are you sure you want to permanently delete this reservation? This action cannot be undone.`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, Delete",
+    cancelButtonText: "Cancel",
+    confirmButtonColor: "#ef4444",
+    cancelButtonColor: "#6b7280",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      router.delete(route('user.reservations.destroy', reservation.id))
+        .then(() => {
+          Swal.fire({
+            title: "Deleted!",
+            text: `Reservation has been permanently deleted.`,
+            icon: "success",
+            confirmButtonText: "OK",
+            confirmButtonColor: "#ef4444",
+          });
+        })
+        .catch(() => {
+          Swal.fire({
+            title: "Error!",
+            text: "Failed to delete reservation.",
+            icon: "error",
+            confirmButtonText: "OK",
+          });
+        });
     }
   });
 };
@@ -323,7 +359,7 @@ const rejectedCount = computed(() => rejectedReservations.value.length);
 
           <div
             v-if="pendingReservations.length > 0"
-            v-for="reservation in pendingReservations"
+            v-for="(reservation, index) in pendingReservations"
             :key="reservation.id"
             class="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:translate-y-[-5px] border border-orange-100/50 backdrop-blur-sm mb-5"
           >
@@ -338,7 +374,7 @@ const rejectedCount = computed(() => rejectedReservations.value.length);
                   </svg>
                 </div>
                 <div>
-                  <div @click="roomIndex(reservation.hotel.id)" class="text-xl font-bold text-orange-900" >{{ reservation.hotel.name }}</div>
+                  <div @click="roomIndex(reservation.hotel.id)" class="text-xl font-bold text-orange-900">ID: {{ reservation.id }} — {{ reservation.hotel.name }}</div>
                     <div class="text-sm text-gray-500">Please wait while your reservation is being approved. Stay tuned for updates.</div>
                     <div v-if="remainingTimes[reservation.id] !== undefined && remainingTimes[reservation.id] !== null" class="text-sm font-semibold text-orange-600 mt-1">Time left: {{ remainingTimes[reservation.id] }}</div>
                 </div>
@@ -473,7 +509,7 @@ const rejectedCount = computed(() => rejectedReservations.value.length);
 
         <div v-if="upCommingReservation().length > 0" class="fade-in" style="animation-delay: 0.2s;">
           <div class="grid grid-cols-1 gap-6">
-            <div v-for="reservation in upCommingReservation()" :key="reservation.id"
+            <div v-for="(reservation, index) in upCommingReservation()" :key="reservation.id"
                  class="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:translate-y-[-5px] border border-orange-100 mb-5">
               <div class="p-6">
                 <div class="flex items-center mb-4">
@@ -483,9 +519,8 @@ const rejectedCount = computed(() => rejectedReservations.value.length);
                     </svg>
                   </div>
                   <div>
-                      <div v-if="reservation.hotel" @click="roomIndex(reservation.hotel.id)" class="text-xl font-bold text-gray-900">
-                          {{ reservation.hotel.name }}
-                      </div>
+                        <div v-if="reservation.hotel" @click="roomIndex(reservation.hotel.id)" class="text-xl font-bold text-gray-900">ID: {{ reservation.id }} — {{ reservation.hotel.name }}
+                        </div>
                     <div class="text-sm text-gray-600">
                       <span class="px-3 py-1 text-sm rounded-full"
                             :class="{
@@ -603,15 +638,18 @@ const rejectedCount = computed(() => rejectedReservations.value.length);
           <table v-if="previousReservations.length > 0" class="w-full overflow-hidden bg-white border-separate shadow-lg rounded-2xl border-spacing-0">
             <thead>
               <tr class="text-white bg-gradient-to-r from-orange-500 to-orange-400">
-                <th class="px-6 py-4 font-medium text-left rounded-tl-xl">Hotel Name</th>
+                <th class="px-6 py-4 font-medium text-left rounded-tl-xl">No / ID</th>
+                <th class="px-6 py-4 font-medium text-left">Hotel Name</th>
                 <th class="px-6 py-4 font-medium text-left">Check-In Date</th>
                 <th class="px-6 py-4 font-medium text-left">Check-Out Date</th>
-                <th class="px-6 py-4 font-medium text-left rounded-tr-xl">Earned Coins</th>
+                <th class="px-6 py-4 font-medium text-left">Earned Coins</th>
+                <th class="px-6 py-4 font-medium text-left rounded-tr-xl">Action</th>
               </tr>
             </thead>
             <tbody>
               <template v-for="(reservation, index) in previousReservations" :key="index">
                 <tr class="transition-colors duration-200 hover:bg-orange-50/70 cursor-pointer" @click="toggleDetails(`prev-${reservation.id}`)">
+                  <td class="px-6 py-4 border-b border-orange-100 font-semibold text-sm">{{ reservation.id }}</td>
                   <td class="px-6 py-4 border-b border-orange-100">
                     {{ reservation.hotel ? reservation.hotel.name : (reservation.reservation?.hotel?.name || 'Unknown Hotel') }}
                   </td>
@@ -629,10 +667,17 @@ const rejectedCount = computed(() => rejectedReservations.value.length);
                       </svg>
                     </div>
                   </td>
+                  <td class="px-6 py-4 border-b border-orange-100" @click.stop>
+                    <button @click="deleteReservation(reservation)" class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition-all duration-200" title="Delete reservation">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                      </svg>
+                    </button>
+                  </td>
                 </tr>
                 <!-- Room Details Row for Previous -->
                 <tr v-if="showDetails[`prev-${reservation.id}`] && reservationRooms[reservation.id]" class="bg-orange-50/50 border-b border-orange-100">
-                  <td colspan="4" class="px-6 py-4">
+                  <td colspan="6" class="px-6 py-4">
                     <div v-if="reservationRooms[reservation.id].length > 0" class="ml-4">
                       <div class="font-bold text-gray-800 mb-3">Room Details</div>
                       <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
@@ -687,29 +732,32 @@ const rejectedCount = computed(() => rejectedReservations.value.length);
           <table v-if="rejectedReservations.length > 0" class="w-full overflow-hidden bg-white border-separate shadow-lg rounded-2xl border-spacing-0">
             <thead>
               <tr class="text-white bg-gradient-to-r from-red-500 to-red-400">
-                <th class="px-6 py-4 font-medium text-left rounded-tl-xl">Hotel Name</th>
+                <th class="px-6 py-4 font-medium text-left rounded-tl-xl">No / ID</th>
+                <th class="px-6 py-4 font-medium text-left">Hotel Name</th>
                 <th class="px-6 py-4 font-medium text-left">Check-In Date</th>
                 <th class="px-6 py-4 font-medium text-left">Check-Out Date</th>
                 <th class="px-6 py-4 font-medium text-left">Total Price</th>
-                <th class="px-6 py-4 font-medium text-left rounded-tr-xl">Rejection Reason</th>
+                <th class="px-6 py-4 font-medium text-left">Rejection Reason</th>
+                <th class="px-6 py-4 font-medium text-left rounded-tr-xl">Action</th>
               </tr>
             </thead>
             <tbody>
               <template v-for="(reservation, index) in rejectedReservations" :key="index">
                 <tr class="transition-colors duration-200 hover:bg-red-50/70 cursor-pointer border-b border-red-100" @click="toggleDetails(`reject-${reservation.id}`)">
-                  <td class="px-6 py-4">
+                  <td class="px-6 py-4 border-b border-red-100 font-semibold text-sm">{{ reservation.id }}</td>
+                  <td class="px-6 py-4 border-b border-red-100">
                     {{ reservation.hotel ? reservation.hotel.name : 'Unknown Hotel' }}
                   </td>
-                  <td class="px-6 py-4">
+                  <td class="px-6 py-4 border-b border-red-100">
                     {{ reservation.check_in_date || 'N/A' }}
                   </td>
-                  <td class="px-6 py-4">
+                  <td class="px-6 py-4 border-b border-red-100">
                     {{ reservation.check_out_date || 'N/A' }}
                   </td>
-                  <td class="px-6 py-4">
+                  <td class="px-6 py-4 border-b border-red-100">
                     <span class="font-semibold text-red-500">Rs: {{ reservation.total_price || '0' }}</span>
                   </td>
-                  <td class="px-6 py-4">
+                  <td class="px-6 py-4 border-b border-red-100">
                     <div class="flex items-center justify-between">
                       <span class="px-3 py-1 text-sm text-white bg-red-500 rounded-full">
                         {{ reservation.rejection_reason || 'Rejected by hotel owner' }}
@@ -719,10 +767,17 @@ const rejectedCount = computed(() => rejectedReservations.value.length);
                       </svg>
                     </div>
                   </td>
+                  <td class="px-6 py-4 border-b border-red-100" @click.stop>
+                    <button @click="deleteReservation(reservation)" class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition-all duration-200" title="Delete reservation">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                      </svg>
+                    </button>
+                  </td>
                 </tr>
                 <!-- Room Details Row for Rejected -->
                 <tr v-if="showDetails[`reject-${reservation.id}`] && reservationRooms[reservation.id]" class="bg-red-50/50 border-b border-red-100">
-                  <td colspan="5" class="px-6 py-4">
+                  <td colspan="7" class="px-6 py-4">
                     <div v-if="reservationRooms[reservation.id].length > 0" class="ml-4">
                       <div class="font-bold text-gray-800 mb-3">Room Details</div>
                       <div class="grid grid-cols-1 gap-2 md:grid-cols-2">

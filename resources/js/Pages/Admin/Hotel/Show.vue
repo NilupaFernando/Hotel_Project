@@ -14,48 +14,80 @@
                 </div>
                 <div class="mx-auto ml-10 max-w-8xl sm:px-6 lg:px-8">
                     <template v-if="hotels.rooms.length > 0">
-                        <div class="overflow-x-auto bg-white shadow-sm sm:rounded-lg">
-                            <table class="min-w-full border-separate border-black table-auto dark:bg-gray-800 dark:text-white">
+                        <div class="overflow-x-auto bg-white shadow-lg sm:rounded-lg border border-gray-200">
+                            <table class="min-w-full border-collapse table-auto">
                                 <thead>
-                                <tr class="bg-[#FF9B50] text-white dark:bg-gray-700">
-                                    <th class="px-4 py-2 text-left">Room Type</th>
-                                    <th class="px-4 py-2 text-left">Bookable Rooms</th>
-                                    <th class="px-4 py-2 text-left">Booked Rooms</th>
-                                    <th class="px-4 py-2 text-left">Available Rooms</th>
-                                    <th class="px-4 py-2 text-left">Numbers Of Geste</th>
-                                    <th class="px-4 py-2 text-left">Price</th>
-                                    <th class="px-4 py-2 text-left">Discount</th>
-                                    <th class="px-4 py-2 text-left">Features</th>
-                                    <th class="px-4 py-2 text-left">Free Services</th>
-                                    <th class="px-4 py-2 text-left">Description</th>
+                                <tr class="bg-gradient-to-r from-[#FF9B50] to-[#FF8C42] text-white">
+                                    <th class="px-6 py-3 text-left font-bold text-sm border-b-2 border-orange-600">Room Type</th>
+                                    <th class="px-6 py-3 text-left font-bold text-sm border-b-2 border-orange-600">Room Count</th>
+                                    
+                                    <th class="px-6 py-3 text-left font-bold text-sm border-b-2 border-orange-600">Numbers Of Guests</th>
+                                    <th class="px-6 py-3 text-left font-bold text-sm border-b-2 border-orange-600">Price</th>
+                                    <th class="px-6 py-3 text-left font-bold text-sm border-b-2 border-orange-600">Discount</th>
+                                    <th class="px-6 py-3 text-left font-bold text-sm border-b-2 border-orange-600">Features</th>
+                                    <th class="px-6 py-3 text-left font-bold text-sm border-b-2 border-orange-600">Free Services</th>
+                                    <th class="px-6 py-3 text-left font-bold text-sm border-b-2 border-orange-600">Description</th>
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <tr v-for="room in hotels.rooms" :key="room.id">
-                                    <td class="px-4 py-2">{{ room.type }}</td>
-                                    <td class="px-4 py-2">{{ room.bookable_rooms }}</td>
-                                    <td class="px-4 py-2">{{ room.booked_rooms }}</td>
-                                    <td class="px-4 py-2">{{ room.available_rooms }}</td>
-                                    <td class="px-4 py-2">
-                                        <div>
-                                            <p class="text-left">Max adult: {{ room.max_adult }}</p>
-                                            <p class="text-left">Max child: {{  room.max_children? room.max_children : "no added children"}}</p>
-                                        </div>
-                                    </td>
-                                    <td class="px-4 py-2">
-                                        <div>
-                                            <p class="text-left">adult Price: {{ room.price_per_adult }}</p>
-                                            <p class="text-left">child Price: {{ room.price_per_child }}</p>
-                                        </div>
-                                    </td>
-                                    <td class="px-4 py-2">{{ room.discount }}</td>
-                                    <td class="px-4 py-2">{{ room.features }}</td>
-                                    <td class="px-4 py-2">{{ room.free_services }}</td>
-                                    <td class="px-4 py-2">
-                                        <span v-if="room.description === null">No description available</span>
-                                        <span v-else>{{ room.description }}</span>
-                                    </td>
-                                </tr>
+                                <template v-for="room in hotels.rooms" :key="room.id">
+                                    <tr class="transition-colors duration-200 hover:bg-orange-50 border-b border-gray-200">
+                                        <td class="px-6 py-4 text-gray-900 font-medium text-sm">{{ room.type }}</td>
+                                        <td class="px-6 py-4 text-gray-800 text-sm text-center">{{ room.bookable_rooms }}</td>
+                                
+                                        <td class="px-10 py-4 border-r border-[#FF9B50]">
+                                            <div v-if="room.option_room && room.option_room.length"
+                                                class="space-y-5">
+                                                <div v-for="option in room.option_room" :key="option.id"
+                                                    class="font-medium text-gray-600 ">
+                                                    <span
+                                                        class="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
+                                                        {{ option.adult_count }} Adults, {{ option.child_count }}
+                                                        Children
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div v-else class="text-sm text-gray-600">
+                                                <p>Max adult: {{ room.max_adult }}</p>
+                                                <p>Max child: {{ room.max_children || "No children" }}</p>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-gray-800 text-sm text-center">
+                                            <div v-if="room.option_room && room.option_room.length" class="space-y-2">
+                                                <div v-for="option in room.option_room" :key="option.id" class="font-medium text-gray-900">
+                                                    LKR {{ option.price }}
+                                                </div>
+                                            </div>
+                                            <div v-else class="font-medium text-gray-900">
+                                                LKR {{ hotels.price_per_night }}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-gray-700 text-sm text-center">{{ room.discount || 'Not added' }}</td>
+                                        <td class="px-6 py-4 text-gray-700 text-sm">
+                                            <div v-if="room.features" class="flex flex-wrap gap-2">
+                                                <div v-for="feature in room.features.split(',')" :key="feature" class="flex items-center gap-1 px-2 py-1 text-sm text-orange-700 bg-orange-100 rounded-full">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    <span>{{ feature.trim() }}</span>
+                                                </div>
+                                            </div>
+                                            <span v-else class="text-gray-500">Not added</span>
+                                        </td>
+                                        <td class="px-6 py-4 text-gray-700 text-sm">
+                                            <div v-if="room.free_services" class="flex flex-wrap gap-2">
+                                                <div v-for="service in room.free_services.split(',')" :key="service" class="flex items-center gap-1 px-2 py-1 text-sm text-green-700 bg-green-100 rounded-full">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span>{{ service.trim() }}</span>
+                                                </div>
+                                            </div>
+                                            <span v-else class="text-gray-500">Not added</span>
+                                        </td>
+                                        <td class="px-6 py-4 text-gray-700 text-sm max-w-xs">{{ room.description || 'No description available' }}</td>
+                                    </tr>
+                                </template>
                                 </tbody>
                             </table>
                         </div>

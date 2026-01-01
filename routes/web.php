@@ -120,6 +120,7 @@ Route::middleware(['auth','role:user'])->group(function () {
     Route::post('/user/reservations/store', [UserReservationController::class, 'store'])->name('user.reservations.store');
     Route::get('/user/reservations/{id}', [UserReservationController::class, 'show'])->name('user.reservations.show');
     Route::post('/user/reservations/cancel/{id}', [UserReservationController::class, 'cancel'])->name('user.reservations.cancel');
+    Route::delete('/user/reservations/{id}', [UserReservationController::class, 'delete'])->name('user.reservations.destroy');
     Route::delete('/user/reservations/{id}/delete',[UserReservationController::class,'delete'])->name('user.reservations.delete');
 
 //    Route::get('/user/reservations/payment/{id}', [UserReservationController::class, 'showPayment'])->name('user.reservations.payment');
@@ -163,6 +164,8 @@ Route::middleware(['auth','role:hotel_owner'])->group(function () {
     Route::get('/my-hotel/reservations', [HotelOwnerReservationController::class, 'index'])->name('hotelOwner.reservations.index');
     //reservation Save
     Route::post('/my-hotel/reservations/update/{id}', [HotelOwnerReservationController::class, 'update'])->name('hotelOwner.reservations.update');
+    //reservation Delete
+    Route::delete('/my-hotel/reservations/{id}', [HotelOwnerReservationController::class, 'destroy'])->name('hotelOwner.reservations.destroy');
 
 //    Route::get('/user/reservations/{id}', [UserReservationController::class, 'show'])->name('user.reservations.show');
 //            //reservation Update

@@ -24,7 +24,15 @@ class Reservation extends Model
         'total_price',
         'status',
         'rejection_reason',
+        'deleted_by_user',
+        'deleted_by_owner',
         'special_requests',
+    ];
+
+    protected $casts = [
+        'is_completed' => 'boolean',
+        'deleted_by_user' => 'boolean',
+        'deleted_by_owner' => 'boolean',
     ];
 
     // Append ISO formatted expire time for frontend JSON

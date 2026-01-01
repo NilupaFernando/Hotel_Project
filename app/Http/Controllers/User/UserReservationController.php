@@ -182,16 +182,28 @@ return back()->with('success', 'Reservation created successfully');
 
     public function delete($id)
     {
+        DB::beginTransaction();
         try {
             $reservation = Reservation::where('id', $id)
                 ->where('user_id', auth()->id())
                 ->firstOrFail();
 
-            $reservation->delete();
-            return back()->with('success', 'Reservation deleted successfully.');
+            // Mark as deleted by user
+            $reservation->update(['deleted_by_user' => true]);
+
+            // If both user and owner have deleted, remove permanently
+            if ($reservation->deleted_by_owner) {
+                ReservationRoom::where('reservation_id', $id)->delete();
+                $reservation->delete();
+            }
+
+            DB::commit();
+            return back()->with('success', 'Reservation deleted from your view successfully.');
         } catch (\Exception $exception) {
-            Log::error('Error deleting hotel', [
-                'hotel_id' => $id,
+            DB::rollBack();
+            Log::error('Error deleting reservation', [
+                'reservation_id' => $id,
+                'user_id' => auth()->id(),
                 'message' => $exception->getMessage(),
                 'file' => $exception->getFile(),
                 'line' => $exception->getLine()

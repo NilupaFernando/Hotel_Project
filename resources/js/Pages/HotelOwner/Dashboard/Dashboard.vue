@@ -59,6 +59,8 @@ onUnmounted(() => {
 
 const filteredReservations = computed(() => {
   const pendingReservations = props.reservations.filter(request => {
+    // hide reservations that owner has deleted from owner view
+    if (request.deleted_by_owner) return false;
     return request.status === 'pending' && request.reservation_type === activeTab.value;
   });
 
@@ -76,6 +78,8 @@ console.log('filteredReservations', filteredReservations.value);
 const previousReservations = computed(() => {
   const now = new Date();
   return props.reservations.filter(request => {
+    // hide reservations that owner removed from their view
+    if (request.deleted_by_owner) return false;
     if (request.is_completed) return true;
     return request.status === 'confirmed' && new Date(request.check_out_date) <= now;
   });
@@ -85,6 +89,7 @@ const upCommingReservation = computed(() => {
   const today = new Date();
   today.setHours(0, 0, 0, 0); 
   return props.reservations.filter(reservation => {
+    if (reservation.deleted_by_owner) return false;
     if (reservation.is_completed) return false;
     const checkOutDate = new Date(reservation.check_out_date);
     checkOutDate.setHours(0, 0, 0, 0);
@@ -167,6 +172,40 @@ const completeReservation = (request) => {
             icon: "success",
             confirmButtonText: "OK",
             confirmButtonColor: "#10B981",
+          });
+        });
+    }
+  });
+};
+
+const deleteReservation = (reservation) => {
+  Swal.fire({
+    title: "Delete Reservation?",
+    text: `Are you sure you want to permanently delete this reservation for ${reservation.user.name}? This action cannot be undone.`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, Delete",
+    cancelButtonText: "Cancel",
+    confirmButtonColor: "#ef4444",
+    cancelButtonColor: "#6b7280",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      router.delete(route('hotelOwner.reservations.destroy', { id: reservation.id }))
+        .then(() => {
+          Swal.fire({
+            title: "Deleted!",
+            text: `Reservation has been permanently deleted.`,
+            icon: "success",
+            confirmButtonText: "OK",
+            confirmButtonColor: "#ef4444",
+          });
+        })
+        .catch(() => {
+          Swal.fire({
+            title: "Error!",
+            text: "Failed to delete reservation.",
+            icon: "error",
+            confirmButtonText: "OK",
           });
         });
     }
@@ -550,13 +589,13 @@ const formatCurrency = (value) => {
           <!-- Pending Requests -->
           <div class="bg-white rounded-2xl shadow-md overflow-hidden mb-12">
             <div class="divide-y divide-gray-100 space-y-2">
-              <div v-for="request in filteredReservations" :key="request.id"
+                <div v-for="(request, idx) in filteredReservations" :key="request.id"
                   class="group hover:bg-orange-50 transition-all duration-300 p-6 animate-fadeIn first:border-t-0">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div class="flex-1">
                     <div class="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
                       <h3 class="text-xl font-bold text-gray-800 group-hover:text-orange-600 transition-colors">
-                        {{ request.user.name }}
+                        ID: {{ request.id }} — {{ request.user.name }}
                       </h3>
                       
                       <div class="flex items-center ml-auto gap-4">
@@ -665,7 +704,7 @@ const formatCurrency = (value) => {
           <!-- Upcoming Reservations Section -->
           <div v-if="upCommingReservation.length > 0" class="mb-16 fade-in" style="animation-delay: 0.2s;">           
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
-              <div v-for="reservation in upCommingReservation" :key="reservation.id" 
+              <div v-for="(reservation, idx) in upCommingReservation" :key="reservation.id" 
                   class="bg-white rounded-2xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:translate-y-[-5px] border border-amber-100/50">
                 <div class="p-6">
                   <div class="flex items-center mb-4">
@@ -675,7 +714,7 @@ const formatCurrency = (value) => {
                       </svg>
                     </div>
                     <div>
-                      <div class="text-xl font-bold text-gray-900">{{ reservation.user.name }}</div>
+                      <div class="text-xl font-bold text-gray-900">ID: {{ reservation.id }} — {{ reservation.user.name }}</div>
                     </div>
                   </div>
                   
@@ -757,15 +796,18 @@ const formatCurrency = (value) => {
               <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-orange-50">
                   <tr>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">ID</th>
                     <th class="px-6 py-4 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Customer Name</th>
                     <th class="px-6 py-4 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Check in Date</th>
                     <th class="px-6 py-4 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Check out Date</th>
                     <th class="px-6 py-4 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Rooms</th>
                     <th class="px-6 py-4 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Budget</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Action</th>
                   </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                  <tr v-for="prev in previousReservations" :key="prev.id" class="hover:bg-orange-50 transition-colors duration-200">
+                  <tr v-for="(prev, idx) in previousReservations" :key="prev.id" class="hover:bg-orange-50 transition-colors duration-200">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-semibold">{{ prev.id }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ prev.user.name }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ prev.check_in_date }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ prev.check_out_date }}</td>
@@ -777,6 +819,13 @@ const formatCurrency = (value) => {
                         </div>
                       </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rs.{{ prev.total_price }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
+                      <button @click="deleteReservation(prev)" class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition-all duration-200" title="Delete reservation">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                      </button>
+                    </td>
                   </tr>
                 </tbody>
               </table>

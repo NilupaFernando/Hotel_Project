@@ -121,4 +121,40 @@ class HotelOwnerReservationController extends Controller
         }
     }
 
+    /**
+     * Permanently delete a reservation.
+     *
+     * @param  int  $id Reservation ID
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function destroy($id)
+    {
+        DB::beginTransaction();
+        try {
+            $reservation = Reservation::where('id', $id)
+                ->where('hotel_owner_id', auth()->id())
+                ->firstOrFail();
+
+            // Mark as deleted by owner
+            $reservation->update(['deleted_by_owner' => true]);
+
+            // If both user and owner have deleted, remove permanently
+            if ($reservation->deleted_by_user) {
+                ReservationRoom::where('reservation_id', $id)->delete();
+                $reservation->delete();
+            }
+
+            DB::commit();
+            return back()->with('success', 'Reservation deleted for owner view successfully!');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            Log::error('Error deleting reservation', [
+                'message' => $exception->getMessage(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+            ]);
+            return back()->with('error', 'Failed to delete reservation!');
+        }
+    }
+
 }
