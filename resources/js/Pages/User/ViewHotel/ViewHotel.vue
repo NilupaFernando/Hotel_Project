@@ -145,13 +145,13 @@
                                                     </div>
 
                                                     <!-- Child Count -->
-                                                    <div class="flex items-center">
-                                                        <UserIcon class="w-5 h-5 text-orange-400" />
-                                                        <span class="ml-1 text-sm font-medium text-gray-700">×</span>
-                                                        <span class="ml-1 text-sm font-medium text-gray-700">{{
-                                                            option.child_count
-                                                            }}</span>
-                                                    </div>
+                                                 <div class="flex items-center">
+                                                 <span class="text-lg">👶</span>
+                                           <span class="ml-1 text-sm font-medium text-gray-700">×</span>
+                                           <span class="ml-1 text-sm font-medium text-gray-700">
+                                              {{ option.child_count }}
+                                                 </span>
+                                                  </div>
                                                 </div>
                                             </div>
                                             <div v-else class="p-3 border-b">
