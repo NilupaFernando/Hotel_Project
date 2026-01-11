@@ -27,7 +27,8 @@ const props = defineProps({
 
 console.log(props.isOffer);
 
-const accommodationTypes = ["Hotel", "Resort","Guesthouse","Villa","Hostel","Apartment","Homestay","Motel","Chalet","Banglow","Cabana","Pavilion","Cottage"];
+const accommodationTypes = ["Hotel", "Resort","Business Hotel","Extended Stay Hotel","Guesthouse","Villa","Bunglow","Cabana","Pavilion","Cottage",
+    "Hostel","Apartment","Homestay","Motel","Chalet"];
 const categories = ['Beach', 'Mountains', 'Forests', 'Historical Sites', 'Lakes', 'Wild life', 'Tourist Activities'];
 const HotelStars = ['5', '4', '3', '2'];
 
