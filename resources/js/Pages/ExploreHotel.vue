@@ -21,8 +21,8 @@ const props = defineProps({
   }
 });
 
-const accommodationTypes = ['Hotel', 'Apartment', 'Resort', 'Guesthouse', 'Villa', 'Motel'];
-const categories = ['Beach', 'Mountains', 'Forests', 'Historical Sites', 'Lakes', 'Tourist Activities'];
+const accommodationTypes = ["Hotel", "Resort","Guesthouse","Villa","Hostel","Apartment","Homestay","Motel","Chalet","Banglow","Cabana","Pavilion","Cottage"];
+const categories = ['Beach', 'Mountains', 'Forests', 'Historical Sites', 'Lakes', 'Wild life', 'Tourist Activities'];
 const HotelStars = ['5', '4', '3', '2'];
 
 const selectedAccommodations = ref([]);
@@ -49,11 +49,21 @@ const filteredHotels = computed(() => {
     }
 
     if (selectedCategories.value.length > 0) {
-      const hotelCategories = Array.isArray(hotel.category) 
-        ? hotel.category 
-        : hotel.category.split(',').map(cat => cat.trim());
-      
-      if (!selectedCategories.value.some(category => hotelCategories.includes(category))) {
+      const normalizeCategory = (str) => {
+        if (!str) return '';
+        return String(str)
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]/g, '')
+          .replace(/s$/,'');
+      };
+
+      const hotelCategories = (Array.isArray(hotel.category) ? hotel.category : (hotel.category ? hotel.category.split(',') : []))
+        .map(cat => normalizeCategory(cat));
+
+      const selectedCats = selectedCategories.value.map(cat => normalizeCategory(cat));
+
+      if (!selectedCats.some(category => hotelCategories.includes(category))) {
         return false;
       }
     }
